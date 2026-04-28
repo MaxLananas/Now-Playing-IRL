@@ -16,6 +16,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.Executors;
@@ -34,6 +35,7 @@ public class NowPlayingClient implements ClientModInitializer {
     private volatile MediaInfo currentMedia;
     
     // Keybindings
+    private KeyBinding.Category keybindCategory;
     private KeyBinding toggleKey;
     private KeyBinding configKey;
     private KeyBinding cycleThemeKey;
@@ -66,7 +68,7 @@ public class NowPlayingClient implements ClientModInitializer {
         // Enregistrer le callback de rendu HUD
         HudRenderCallback.EVENT.register((drawContext, renderTickCounter) -> {
             if (config.isEnabled()) {
-                float tickDelta = renderTickCounter.getTickDelta(true);
+                float tickDelta = renderTickCounter.getTickProgress(true);
                 hud.render(drawContext, tickDelta);
             }
         });
@@ -82,11 +84,13 @@ public class NowPlayingClient implements ClientModInitializer {
     
     private void registerKeybindings() {
         // Toggle HUD on/off
+        keybindCategory = KeyBinding.Category.create(Identifier.of("key.nowplayingirl.category"));
         toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.nowplayingirl.toggle",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_N,
-            "key.nowplayingirl.category"
+            keybindCategory
+
         ));
         
         // Ouvrir le menu de configuration
@@ -94,7 +98,7 @@ public class NowPlayingClient implements ClientModInitializer {
             "key.nowplayingirl.config",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_M,
-            "key.nowplayingirl.category"
+            keybindCategory
         ));
         
         // Changer de thème rapidement
@@ -102,7 +106,7 @@ public class NowPlayingClient implements ClientModInitializer {
             "key.nowplayingirl.cycle_theme",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_COMMA,  // Touche ","
-            "key.nowplayingirl.category"
+            keybindCategory
         ));
     }
     

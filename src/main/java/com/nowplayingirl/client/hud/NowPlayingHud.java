@@ -1,15 +1,15 @@
 package com.nowplayingirl.client.hud;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.nowplayingirl.NowPlayingIRLMod;
+
 import com.nowplayingirl.client.NowPlayingClient;
 import com.nowplayingirl.client.config.ModConfig;
 import com.nowplayingirl.client.media.MediaInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
+import org.joml.Matrix3x2f;
 
 public class NowPlayingHud {
     
@@ -89,9 +89,9 @@ public class NowPlayingHud {
         float opacity = config.getOpacity() * animator.getVisibility();
         
         // Push matrix for scaling
-        context.getMatrices().push();
-        context.getMatrices().translate(x, y, 0);
-        context.getMatrices().scale(scale, scale, 1f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(x, y);
+        context.getMatrices().scale(scale, scale);
         
         // Get theme colors
         Theme theme = config.getTheme();
@@ -106,7 +106,7 @@ public class NowPlayingHud {
             drawSilenceContent(context, mc, theme, opacity);
         }
         
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
     
     private void drawBackground(DrawContext context, int x, int y, int width, int height, Theme theme, float opacity) {
@@ -170,25 +170,26 @@ public class NowPlayingHud {
     private void drawAlbumArt(DrawContext context, int x, int y, int size, float opacity) {
         Identifier texture = currentMedia != null ? currentMedia.getAlbumArtTexture() : null;
         
-        context.getMatrices().push();
+        context.getMatrices().pushMatrix();
         
         // Center point for rotation
         float centerX = x + size / 2f;
         float centerY = y + size / 2f;
         
-        context.getMatrices().translate(centerX, centerY, 0);
-        context.getMatrices().multiply(
-            new org.joml.Quaternionf().rotateZ((float) Math.toRadians(animator.getAlbumRotation()))
+        context.getMatrices().translate(centerX, centerY);
+        float angleRad = (float) Math.toRadians(animator.getAlbumRotation());
+        Matrix3x2f rotation = new Matrix3x2f().rotate(angleRad);
+        context.getMatrices().mul(
+                rotation
         );
-        context.getMatrices().translate(-size / 2f, -size / 2f, 0);
+        context.getMatrices().translate(-size / 2f, -size / 2f);
         
         if (texture != null) {
             // Draw actual album art avec la nouvelle API 1.21.4
-            RenderSystem.enableBlend();
-            RenderSystem.setShaderColor(1f, 1f, 1f, opacity);
-            
+            //RenderSystem.enableBlend();
+            //RenderSystem.setShaderColor(1f, 1f, 1f, opacity);
             context.drawTexture(
-                RenderLayer::getGuiTextured,
+                RenderPipelines.GUI_TEXTURED,
                 texture,
                 0, 0,
                 0f, 0f,
@@ -196,16 +197,16 @@ public class NowPlayingHud {
                 size, size
             );
             
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-            RenderSystem.disableBlend();
+            //RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+            //RenderSystem.disableBlend();
         } else {
             // Draw placeholder (vinyl record style)
             drawVinylPlaceholder(context, 0, 0, size, opacity);
         }
         
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
-    
+
     private void drawVinylPlaceholder(DrawContext context, int x, int y, int size, float opacity) {
         Theme theme = client.getConfig().getTheme();
         int diskColor = applyOpacity(0xFF1a1a1a, opacity);

@@ -178,7 +178,7 @@ public class AlbumArtFetcher {
                 client.execute(() -> {
                     try {
                         NativeImage image = NativeImage.read(new ByteArrayInputStream(pngData));
-                        NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
+                        NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "meow",image);
                         client.getTextureManager().registerTexture(textureId, texture);
                         result[0] = textureId;
                     } catch (Exception e) {
