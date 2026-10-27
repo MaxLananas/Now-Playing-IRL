@@ -9,17 +9,7 @@ repositories { mavenCentral() }
 // Shared sources from the repo root, with the MC-facing classes replaced by their src26/ (Mojang mappings) variants.
 sourceSets {
     main {
-        java {
-            srcDirs = ['../src/main/java', '../src26/java']
-            exclude 'com/nowplayingirl/client/NowPlayingClient.java'
-            exclude 'com/nowplayingirl/client/KeyBindingCompat.java'
-            exclude 'com/nowplayingirl/client/config/ConfigScreen.java'
-            exclude 'com/nowplayingirl/client/config/ModMenuIntegration.java'
-            exclude 'com/nowplayingirl/client/hud/NowPlayingHud.java'
-            exclude 'com/nowplayingirl/client/media/MediaInfo.java'
-            exclude 'com/nowplayingirl/client/media/AlbumArtFetcher.java'
-            exclude 'com/nowplayingirl/mixin/HudMixin.java'
-        }
+        java { srcDirs = ['../src/main/java', '../src26/java'] }
         resources { srcDirs = ['../src/main/resources'] }
     }
 }
