@@ -13,9 +13,11 @@
     "nowplayingirl.config.enabled": "Activé",
     "nowplayingirl.silence": "Silence...",
     "nowplayingirl.sleeping": "♪ zzZ",
-    
     "key.nowplayingirl.category": "Now Playing IRL",
     "key.nowplayingirl.toggle": "Afficher/Masquer",
     "key.nowplayingirl.config": "Ouvrir les paramètres",
-    "key.nowplayingirl.cycle_theme": "Changer de thème"
+    "key.nowplayingirl.cycle_theme": "Changer de thème",
+    "nowplayingirl.config.progress": "Barre de progression",
+    "nowplayingirl.config.compact": "Mode compact",
+    "nowplayingirl.config.hide_silence": "Masquer si silence"
 }

@@ -1,29 +1,38 @@
 {
-    "schemaVersion": 1,
-    "id": "nowplayingirl",
-    "version": "${version}",
-    "name": "Now Playing IRL",
-    "description": "Display your currently playing music (Spotify, YouTube, VLC, etc.) directly in Minecraft!",
-    "authors": ["Maxlananas"],
-    "contact": {
-        "homepage": "https://github.com/yourname/now-playing-irl",
-        "sources": "https://github.com/yourname/now-playing-irl"
-    },
-    "license": "MIT",
-    "icon": "assets/nowplayingirl/icon.png",
-    "environment": "client",
-    "entrypoints": {
-        "client": ["com.nowplayingirl.client.NowPlayingClient"],
-        "modmenu": ["com.nowplayingirl.client.config.ModMenuIntegration"]
-    },
-    "mixins": ["nowplayingirl.mixins.json"],
-    "depends": {
-        "fabricloader": ">=0.16.0",
-        "minecraft": "~1.21.4",
-        "java": ">=21",
-        "fabric-api": "*"
-    },
-    "suggests": {
-        "modmenu": "*"
-    }
+  "schemaVersion": 1,
+  "id": "nowplayingirl",
+  "version": "${version}",
+  "name": "Now Playing IRL",
+  "description": "Display your currently playing music (Spotify, TIDAL, AIMP, VLC, YouTube, 190+ apps) directly in Minecraft!",
+  "authors": [
+    "Maxlananas"
+  ],
+  "contact": {
+    "homepage": "https://github.com/MaxLananas/Now-Playing-IRL",
+    "sources": "https://github.com/MaxLananas/Now-Playing-IRL",
+    "issues": "https://github.com/MaxLananas/Now-Playing-IRL/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/nowplayingirl/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.nowplayingirl.client.NowPlayingClient"
+    ],
+    "modmenu": [
+      "com.nowplayingirl.client.config.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "nowplayingirl.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
 }

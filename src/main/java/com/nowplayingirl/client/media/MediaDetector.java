@@ -1,155 +1,62 @@
 package com.nowplayingirl.client.media;
-
 import com.nowplayingirl.NowPlayingIRLMod;
-
+import java.util.*;
 public abstract class MediaDetector {
-
     public abstract MediaInfo detect();
-
-    public static MediaDetector create() {
-        String os = System.getProperty("os.name").toLowerCase();
-
-        if (os.contains("win")) {
-            NowPlayingIRLMod.LOGGER.info("Using Windows media detector");
-            return new WindowsMediaDetector();
-        } else if (os.contains("mac")) {
-            NowPlayingIRLMod.LOGGER.info("Using macOS media detector");
-            return new MacOSMediaDetector();
-        } else {
-            NowPlayingIRLMod.LOGGER.info("Using Linux media detector");
-            return new LinuxMediaDetector();
-        }
+    /** Apps the user disabled in the config (by id); checked once per poll, no allocation in hot path when empty. */
+    public static volatile Set<String> disabledApps = Set.of();
+    static boolean disabled(MusicApps.App a){ return a!=null && disabledApps.contains(a.id()); }
+    public static MediaDetector create(){
+        String os=System.getProperty("os.name","").toLowerCase(Locale.ROOT);
+        if(os.contains("win")) return new WindowsMediaDetector();
+        if(os.contains("mac")) return new MacOSMediaDetector();
+        return new LinuxMediaDetector();
     }
 }
-
-// ─────────────────────────────────────────────
-// macOS
-// ─────────────────────────────────────────────
+// ---------- macOS: ONE osascript process for every app (was: one per app) ----------
 class MacOSMediaDetector extends MediaDetector {
-
-    // Liste des apps supportées sur macOS, dans l'ordre de priorité
-    private static final String[][] APPS = {
-        { "Spotify",     "Spotify"     },
-        { "TIDAL",       "Tidal"       },
-        { "Music",       "Apple Music" },
-        { "iTunes",      "iTunes"      },
-        { "Vox",         "Vox"         },
-    };
-
-    @Override
-    public MediaInfo detect() {
-        for (String[] app : APPS) {
-            String appName    = app[0]; // Nom du process AppleScript
-            String sourceName = app[1]; // Nom affiché dans le HUD
-
-            try {
-                // Vérifie si l'app tourne ET joue
-                ProcessBuilder pb = new ProcessBuilder(
-                    "osascript", "-e",
-                    "tell application \"" + appName + "\"\n" +
-                    "  if application \"" + appName + "\" is running then\n" +
-                    "    if player state is playing then\n" +
-                    "      return (get artist of current track) & \"|\" & (get name of current track)\n" +
-                    "    end if\n" +
-                    "  end if\n" +
-                    "end tell"
-                );
-                Process p = pb.start();
-                String result = new String(p.getInputStream().readAllBytes()).trim();
-
-                if (!result.isEmpty() && result.contains("|")) {
-                    String[] parts = result.split("\\|", 2);
-                    if (parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
-                        return new MediaInfo(parts[1].trim(), parts[0].trim(), sourceName);
-                    }
-                }
-            } catch (Exception ignored) {}
+    private static final String SCRIPT = buildScript();
+    private static String buildScript(){
+        StringBuilder script=new StringBuilder();
+        for(MusicApps.App a: MusicApps.APPS){ if(a.macApp().isBlank()) continue;
+            String app=a.macApp().replace("\\","").replace("\"","'");
+            script.append("try\n tell application \"").append(app).append("\"\n  if it is running then\n   try\n    if player state is playing then return \"").append(a.id()).append("|\" & (get artist of current track) & \"|\" & (get name of current track)\n   end try\n  end if\n end tell\nend try\n");
         }
-        return null;
+        return script.toString();
+    }
+    @Override public MediaInfo detect(){
+        if(SCRIPT.isEmpty()) return null;
+        String out=ProcessRunner.run(List.of("osascript","-e",SCRIPT),1200);
+        if(out.isEmpty()) return null;
+        String[] p=out.split("\\|",3); if(p.length<3) return null;
+        MusicApps.App app=MusicApps.byId(p[0].trim()); if(app==null||disabled(app)) return null;
+        MediaInfo m=new MediaInfo(p[2].trim(),p[1].trim(),app.display()); m.setAppId(app.id()); return m.hasValidInfo()?m:null;
     }
 }
-
-// ─────────────────────────────────────────────
-// Linux
-// ─────────────────────────────────────────────
+// ---------- Linux: ONE playerctl process for every MPRIS player (was: 3+ per player) ----------
 class LinuxMediaDetector extends MediaDetector {
-
-    // Noms de players MPRIS reconnus, mappés vers un nom d'affichage
-    private static final String[][] KNOWN_PLAYERS = {
-        { "spotify",     "Spotify"     },
-        { "tidal-hifi",  "Tidal"       },
-        { "tidal",       "Tidal"       },
-        { "firefox",     "Firefox"     },
-        { "chromium",    "Chromium"    },
-        { "chrome",      "Chrome"      },
-        { "vlc",         "VLC"         },
-        { "rhythmbox",   "Rhythmbox"   },
-        { "clementine",  "Clementine"  },
-    };
-
-    @Override
-    public MediaInfo detect() {
-        try {
-            // playerctl --list-all pour connaître les players actifs
-            ProcessBuilder listPb = new ProcessBuilder("playerctl", "--list-all");
-            Process listProcess = listPb.start();
-            String playerList = new String(listProcess.getInputStream().readAllBytes()).trim();
-
-            if (playerList.isEmpty()) return null;
-
-            // Cherche en priorité les players connus
-            for (String[] known : KNOWN_PLAYERS) {
-                String playerId  = known[0];
-                String sourceName = known[1];
-
-                if (!playerList.toLowerCase().contains(playerId)) continue;
-
-                // Vérifie le statut
-                ProcessBuilder statusPb = new ProcessBuilder(
-                    "playerctl", "--player=" + playerId, "status"
-                );
-                Process statusProcess = statusPb.start();
-                String status = new String(statusProcess.getInputStream().readAllBytes()).trim();
-
-                if (!status.equalsIgnoreCase("Playing")) continue;
-
-                // Récupère les métadonnées
-                ProcessBuilder metaPb = new ProcessBuilder(
-                    "playerctl", "--player=" + playerId,
-                    "metadata", "--format", "{{artist}}|{{title}}"
-                );
-                Process metaProcess = metaPb.start();
-                String result = new String(metaProcess.getInputStream().readAllBytes()).trim();
-
-                if (!result.isEmpty() && result.contains("|")) {
-                    String[] parts = result.split("\\|", 2);
-                    if (parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
-                        return new MediaInfo(parts[1].trim(), parts[0].trim(), sourceName);
-                    }
-                }
-            }
-
-            // Fallback : n'importe quel player actif
-            ProcessBuilder pb = new ProcessBuilder(
-                "playerctl", "metadata", "--format", "{{artist}}|{{title}}|{{playerName}}"
-            );
-            Process p = pb.start();
-            String result = new String(p.getInputStream().readAllBytes()).trim();
-
-            if (!result.isEmpty() && result.contains("|")) {
-                String[] parts = result.split("\\|", 3);
-                if (parts.length >= 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
-                    String source = parts.length > 2 ? capitalize(parts[2].trim()) : "Unknown";
-                    return new MediaInfo(parts[1].trim(), parts[0].trim(), source);
-                }
-            }
-
-        } catch (Exception ignored) {}
-        return null;
+    private static final String SEP="\u001f";
+    @Override public MediaInfo detect(){
+        String fmt="{{playerName}}"+SEP+"{{status}}"+SEP+"{{xesam:artist}}"+SEP+"{{xesam:title}}"+SEP+"{{xesam:album}}"+SEP+"{{mpris:artUrl}}"+SEP+"{{position}}"+SEP+"{{mpris:length}}";
+        String out=ProcessRunner.run(List.of("playerctl","-a","metadata","--format",fmt),1200);
+        if(out.isEmpty()) return null;
+        MediaInfo best=null;
+        for(String line: out.split("\\R")){
+            String[] f=line.split(SEP,-1); if(f.length<4) continue;
+            MusicApps.App app=MusicApps.byLinuxPlayer(f[0].trim());
+            String display=app!=null?app.display():cap(f[0].trim());
+            if(app!=null&&disabled(app)) continue;
+            boolean playing=f[1].trim().equalsIgnoreCase("Playing");
+            String artist=f[2].trim(), title=f[3].trim();
+            if(title.isEmpty()) continue;
+            if(artist.isEmpty()) artist=display;
+            MediaInfo m=new MediaInfo(title,artist,display); if(app!=null)m.setAppId(app.id());
+            if(f.length>4)m.setAlbum(f[4].trim()); if(f.length>5&&!f[5].isBlank())m.setArtUrl(f[5].trim());
+            try{ if(f.length>6&&!f[6].isBlank())m.setPositionMs(Long.parseLong(f[6].trim())/1000); if(f.length>7&&!f[7].isBlank())m.setDurationMs(Long.parseLong(f[7].trim())/1000);}catch(NumberFormatException ignored){}
+            m.setPlaying(playing);
+            if(playing) return m; if(best==null) best=m;
+        }
+        return best;
     }
-
-    private String capitalize(String s) {
-        if (s == null || s.isEmpty()) return s;
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
+    private String cap(String s){ return s==null||s.isEmpty()?s:Character.toUpperCase(s.charAt(0))+s.substring(1); }
 }

@@ -16,7 +16,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.Executors;
@@ -34,8 +33,6 @@ public class NowPlayingClient implements ClientModInitializer {
     private ScheduledExecutorService executor;
     private volatile MediaInfo currentMedia;
     
-    // Keybindings
-    private KeyBinding.Category keybindCategory;
     private KeyBinding toggleKey;
     private KeyBinding configKey;
     private KeyBinding cycleThemeKey;
@@ -83,31 +80,9 @@ public class NowPlayingClient implements ClientModInitializer {
     }
     
     private void registerKeybindings() {
-        // Toggle HUD on/off
-        keybindCategory = KeyBinding.Category.create(Identifier.of("key.nowplayingirl.category"));
-        toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.nowplayingirl.toggle",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_N,
-            keybindCategory
-
-        ));
-        
-        // Ouvrir le menu de configuration
-        configKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.nowplayingirl.config",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_M,
-            keybindCategory
-        ));
-        
-        // Changer de thème rapidement
-        cycleThemeKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.nowplayingirl.cycle_theme",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_COMMA,  // Touche ","
-            keybindCategory
-        ));
+        toggleKey = KeyBindingHelper.registerKeyBinding(KeyBindingCompat.create("key.nowplayingirl.toggle", GLFW.GLFW_KEY_N));
+        configKey = KeyBindingHelper.registerKeyBinding(KeyBindingCompat.create("key.nowplayingirl.config", GLFW.GLFW_KEY_M));
+        cycleThemeKey = KeyBindingHelper.registerKeyBinding(KeyBindingCompat.create("key.nowplayingirl.cycle_theme", GLFW.GLFW_KEY_COMMA));
     }
     
     private void onClientTick(MinecraftClient client) {
@@ -149,33 +124,26 @@ public class NowPlayingClient implements ClientModInitializer {
     }
     
     private void startMediaPolling() {
-        executor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "NowPlayingIRL-MediaPoller");
-            t.setDaemon(true);
-            return t;
-        });
-        
-        executor.scheduleAtFixedRate(() -> {
+        executor = Executors.newSingleThreadScheduledExecutor(r -> { Thread t = new Thread(r, "NowPlayingIRL-MediaPoller"); t.setDaemon(true); return t; });
+        final int[] idlePolls = {0};
+        Runnable poll = new Runnable() { @Override public void run() {
             try {
+                com.nowplayingirl.client.media.MediaDetector.disabledApps = java.util.Set.copyOf(config.getDisabledApps());
                 MediaInfo newMedia = mediaDetector.detect();
-                
                 if (newMedia != null && !newMedia.equals(currentMedia)) {
-                    if (newMedia.hasValidInfo()) {
-                        albumArtFetcher.fetchAsync(newMedia, texture -> {
-                            newMedia.setAlbumArtTexture(texture);
-                        });
-                    }
-                    currentMedia = newMedia;
-                    hud.onMediaChanged(newMedia);
-                } else if (newMedia == null && currentMedia != null) {
-                    currentMedia = null;
-                    hud.onMediaChanged(null);
-                }
-                
-            } catch (Exception e) {
-                NowPlayingIRLMod.LOGGER.debug("Error polling media: {}", e.getMessage());
-            }
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+                    idlePolls[0] = 0;
+                    if (newMedia.hasValidInfo()) albumArtFetcher.fetchAsync(newMedia, newMedia::setAlbumArtTexture);
+                    currentMedia = newMedia; hud.onMediaChanged(newMedia);
+                } else if (newMedia == null && currentMedia != null) { currentMedia = null; hud.onMediaChanged(null); }
+                else if (newMedia != null) idlePolls[0] = 0;
+                // Adaptive: poll fast right after a change, back off up to 5x when silent (CPU/process spawns divided)
+                long base = config.getPollingIntervalMs();
+                long delay = newMedia == null ? Math.min(base * (1L + Math.min(idlePolls[0]++, 4)), 5000L) : base;
+                executor.schedule(this, delay, TimeUnit.MILLISECONDS);
+            } catch (Exception e) { NowPlayingIRLMod.LOGGER.debug("Error polling media: {}", e.getMessage()); try { executor.schedule(this, 2000, TimeUnit.MILLISECONDS); } catch (Exception ignored) {} }
+        }};
+        executor.schedule(poll, 0, TimeUnit.MILLISECONDS);
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> shutdown());
     }
     
     public void shutdown() {
