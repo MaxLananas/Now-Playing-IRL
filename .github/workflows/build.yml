@@ -23,7 +23,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: "9.2.1" }
       - name: Build for MC ${{ matrix.mc }}
-        run: gradle build --build-cache --parallel -Pminecraft_version=${{ matrix.mc }} -Pyarn_mappings=${{ matrix.yarn }} -Pfabric_version=${{ matrix.fabric }}
+        run: |
+          set -o pipefail
+          gradle build --build-cache --parallel --console=plain -Pminecraft_version=${{ matrix.mc }} -Pyarn_mappings=${{ matrix.yarn }} -Pfabric_version=${{ matrix.fabric }} 2>&1 | tee build-output.txt
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
       - name: Rename jar per version
         run: |
           mkdir -p out
