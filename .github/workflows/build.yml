@@ -29,6 +29,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
+      - name: Post build log to PR (debug)
+        if: failure() && github.event_name == 'pull_request'
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          { echo "### ❌ Build log MC ${{ matrix.mc }}"; echo '```'; grep -E "error:|FAILED|What went wrong|Could not|Execution failed|Caused by|\.java:" build-output.txt | head -60; echo '```'; } > comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
       - name: Rename jar per version
         run: |
           mkdir -p out
