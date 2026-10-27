@@ -29,6 +29,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
+      - name: Rename jar per version
+        run: |
+          mkdir -p out
+          for f in build/libs/*.jar; do case "$f" in *-sources.jar) ;; *) cp "$f" "out/now-playing-irl-$(grep '^mod_version' gradle.properties | cut -d= -f2)-mc${{ matrix.mc }}.jar";; esac; done
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with: { name: "now-playing-irl-mc${{ matrix.mc }}", path: "out/*.jar", if-no-files-found: error }
   release:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
