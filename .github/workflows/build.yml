@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    permissions: { contents: read, pull-requests: write }
     strategy:
       fail-fast: false
       matrix:
@@ -30,19 +29,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
-      - name: Post build log to PR (debug)
-        if: failure() && github.event_name == 'pull_request'
-        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-        run: |
-          { echo "### ❌ Build log MC ${{ matrix.mc }}"; echo '```'; grep -E "error:|FAILED|What went wrong|Could not|Execution failed|Caused by|\.java:" build-output.txt | head -60; echo '```'; } > comment.md
-          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
-      - name: Rename jar per version
-        run: |
-          mkdir -p out
-          for f in build/libs/*.jar; do case "$f" in *-sources.jar) ;; *) cp "$f" "out/now-playing-irl-$(grep '^mod_version' gradle.properties | cut -d= -f2)-mc${{ matrix.mc }}.jar";; esac; done
-          ls -l out
-      - uses: actions/upload-artifact@v4
-        with: { name: "now-playing-irl-mc${{ matrix.mc }}", path: "out/*.jar", if-no-files-found: error }
   release:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
