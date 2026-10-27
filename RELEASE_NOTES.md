@@ -1,13 +1,11 @@
-## 🎵 Now Playing IRL 3.1.0 — MC 1.21.6 → 26.3 (11 versions !)
+## 🎵 Now Playing IRL 3.1.1 — Correctif de crash (hotfix)
 
 **Choisis le `.jar` qui correspond à ta version de Minecraft** et place-le dans ton dossier `mods/` (Fabric Loader + Fabric API requis).
 
-### 🆕 Nouveau dans la 3.1.0 : le mod arrive sur Minecraft 26.x !
-- **26.1, 26.1.1, 26.1.2, 26.2 et 26.3** supportés, en plus de 1.21.6 → 1.21.11.
-- Minecraft 26.x a tout changé (nouvelle numérotation, **mappings Mojang officiels** à la place de Yarn, **Java 25**, nouveau système de HUD Fabric, touches en SDL) : le mod a donc une couche d'adaptation dédiée (`src26/`), tout le reste (193 apps musicales, détection Spotify/TIDAL/AIMP/VLC/YouTube…, thèmes, options) est partagé entre les deux générations.
-- ⚠️ Pour les versions 26.x : utilise **Java 25** et **Fabric Loader 0.20.1+**. L'intégration ModMenu n'est pas encore incluse sur 26.x (config via la touche `M`, comme toujours).
+### 🐛 Corrigé dans la 3.1.1
+- **Crash au démarrage sur Minecraft 26.1, 26.1.1, 26.1.2 et 26.2** : la création des touches cherchait la constante `InputConstants.Type.KEYBOARD`, qui n'existe que sur 26.3 (elle s'appelle `KEYSYM` avant). Le mod plantait dès son initialisation. Les deux noms sont maintenant acceptés. (26.3 et 1.21.x n'étaient pas touchés.)
+- **Conflit JNA supprimé** : le mod n'embarque plus sa propre copie de JNA 5.14, qui masquait celle, plus récente, de Minecraft 26.x et provoquait des erreurs `oshi ... NoSuchMethodError` dans les logs. Il utilise désormais le JNA fourni par Minecraft. Bonus : le fichier passe de ~4 Mo à quelques centaines de Ko.
+- Le thread de détection musicale ne peut plus jamais faire planter le jeu, même en cas d'erreur native.
 
-### Rappel des fonctions
-193 applications reconnues, 12 thèmes, barre de progression, mode compact, texte défilant, pochettes d'album, polling adaptatif économe en CPU.
-
-> ⚠️ Ne pas utiliser le fichier `-sources.jar` (développeurs uniquement) s'il est présent.
+### Rappel
+11 versions supportées : **1.21.6 → 1.21.11** (Java 21) et **26.1 → 26.3** (Java 25, Loader 0.20.1+). 193 applications musicales reconnues (Spotify, TIDAL, AIMP, VLC, YouTube…), 12 thèmes, barre de progression, pochettes d'album.
