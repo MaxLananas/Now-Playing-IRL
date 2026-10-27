@@ -34,7 +34,7 @@ jobs:
           set -o pipefail
           ARGS="-Pminecraft_version=${{ matrix.mc }} -Pfabric_version=${{ matrix.fabric }} -Ploader_version=${{ matrix.loader }} -Pmod_version=$(grep '^mod_version' gradle.properties | cut -d= -f2)"
           if [ -n "${{ matrix.yarn }}" ]; then ARGS="$ARGS -Pyarn_mappings=${{ matrix.yarn }}"; fi
-          gradle -p ${{ matrix.dir }} build --build-cache --parallel --console=plain $ARGS 2>&1 | tee build-output.txt
+          gradle -p ${{ matrix.dir }} build --build-cache --parallel --console=plain $ARGS 2>&1 | tee build-output.txt || gradle -p ${{ matrix.dir }} build --parallel --console=plain $ARGS 2>&1 | tee build-output.txt
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
@@ -47,7 +47,7 @@ jobs:
         with: { name: "now-playing-irl-mc${{ matrix.mc }}", path: "out/*.jar", if-no-files-found: error }
   release:
     needs: build
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-24.04
     permissions: { contents: write }
     steps:
