@@ -20,7 +20,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -32,7 +32,8 @@ public class AlbumArtFetcher {
     
     private final HttpClient httpClient;
     private final ExecutorService executor;
-    private final Map<String, Identifier> cache = new ConcurrentHashMap<>();
+    private final Map<String, Identifier> cache = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>(64,0.75f,true){ @Override protected boolean removeEldestEntry(Map.Entry<String,Identifier> e){ return size()>48; } });
+    private final Set<String> inFlight = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final AtomicInteger textureCounter = new AtomicInteger(0);
     
     public AlbumArtFetcher() {
@@ -54,36 +55,27 @@ public class AlbumArtFetcher {
         }
         
         String cacheKey = media.getArtist() + "|" + media.getTitle();
-        
-        // Vérifier le cache
-        if (cache.containsKey(cacheKey)) {
-            callback.accept(cache.get(cacheKey));
-            return;
-        }
-        
+        if (cache.containsKey(cacheKey)) { callback.accept(cache.get(cacheKey)); return; }
+        if (!inFlight.add(cacheKey)) return;
         executor.submit(() -> {
             try {
-                // 1. Essayer iTunes
-                String artUrl = fetchFromItunes(media.getArtist(), media.getTitle());
-                
-                // 2. Fallback Deezer
-                if (artUrl == null) {
-                    artUrl = fetchFromDeezer(media.getArtist(), media.getTitle());
-                }
+                // 0. Artwork URL provided directly by the player (MPRIS mpris:artUrl) - no search needed
+                String artUrl = (media.getArtUrl() != null && !media.getArtUrl().isBlank()) ? media.getArtUrl() : null;
+                if (artUrl == null) artUrl = fetchFromItunes(media.getArtist(), media.getTitle());
+                if (artUrl == null) artUrl = fetchFromDeezer(media.getArtist(), media.getTitle());
                 
                 if (artUrl != null) {
                     Identifier texture = downloadAndRegisterTexture(artUrl);
                     if (texture != null) {
-                        cache.put(cacheKey, texture);
+                        cache.put(cacheKey, texture); inFlight.remove(cacheKey);
                         callback.accept(texture);
                         return;
                     }
                 }
                 
-                callback.accept(null);
-                
+                inFlight.remove(cacheKey); callback.accept(null);
             } catch (Exception e) {
-                NowPlayingIRLMod.LOGGER.debug("Failed to fetch album art: {}", e.getMessage());
+                inFlight.remove(cacheKey); NowPlayingIRLMod.LOGGER.debug("Failed to fetch album art: {}", e.getMessage());
                 callback.accept(null);
             }
         });
@@ -152,6 +144,7 @@ public class AlbumArtFetcher {
     
     private Identifier downloadAndRegisterTexture(String imageUrl) {
         try {
+            if (imageUrl.startsWith("file://")) { byte[] local = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(java.net.URI.create(imageUrl))); return registerBytes(local); }
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(imageUrl))
                 .timeout(Duration.ofSeconds(10))
@@ -196,6 +189,12 @@ public class AlbumArtFetcher {
         return null;
     }
     
+    private Identifier registerBytes(byte[] imageData) {
+        try { byte[] pngData = convertToPng(imageData); int id = textureCounter.incrementAndGet(); Identifier textureId = Identifier.of(NowPlayingIRLMod.MOD_ID, "dynamic/album_" + id);
+            MinecraftClient client = MinecraftClient.getInstance(); CountDownLatch latch = new CountDownLatch(1); final Identifier[] result = {null};
+            client.execute(() -> { try { NativeImage image = NativeImage.read(new ByteArrayInputStream(pngData)); NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "nowplayingirl-album", image); client.getTextureManager().registerTexture(textureId, texture); result[0] = textureId; } catch (Exception ignored) {} latch.countDown(); });
+            latch.await(5, TimeUnit.SECONDS); return result[0]; } catch (Exception e) { return null; }
+    }
     private byte[] convertToPng(byte[] imageData) throws Exception {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageData));
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

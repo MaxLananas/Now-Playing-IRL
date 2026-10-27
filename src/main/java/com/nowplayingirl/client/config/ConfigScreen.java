@@ -114,6 +114,19 @@ public class ConfigScreen extends Screen {
                 button.setMessage(Text.literal("Album Art: " + (config.isShowAlbumArt() ? "§aVisible" : "§7Hidden")));
             }
         ).dimensions(centerX - buttonWidth / 2, y, buttonWidth, buttonHeight).build());
+        // v3 toggles (two per row)
+        addToggle(centerX - buttonWidth/2, y, 98, "Progress Bar", config.isShowProgressBar(), v -> config.setShowProgressBar(v));
+        addToggle(centerX + 2, y, 98, "Source", config.isShowSource(), v -> config.setShowSource(v));
+        y += spacing;
+        addToggle(centerX - buttonWidth/2, y, 98, "Compact", config.isCompactMode(), v -> config.setCompactMode(v));
+        addToggle(centerX + 2, y, 98, "Hide Silence", config.isHideWhenNoMedia(), v -> config.setHideWhenNoMedia(v));
+        y += spacing;
+        addToggle(centerX - buttonWidth/2, y, 98, "Scrolling Text", config.isScrollingText(), v -> config.setScrollingText(v));
+        addDrawableChild(ButtonWidget.builder(Text.literal("Poll: " + config.getPollingIntervalMs() + "ms"), b -> {
+            int[] vals = {250, 500, 1000, 2000, 5000}; int cur = config.getPollingIntervalMs(); int nxt = vals[0];
+            for (int i = 0; i < vals.length; i++) if (vals[i] == cur) nxt = vals[(i + 1) % vals.length];
+            config.setPollingIntervalMs(nxt); b.setMessage(Text.literal("Poll: " + nxt + "ms"));
+        }).dimensions(centerX + 2, y, 98, buttonHeight).build());
         y += spacing + 15;
 
         // Done & Reset
@@ -131,24 +144,25 @@ public class ConfigScreen extends Screen {
         ).dimensions(centerX + 5, y, 95, buttonHeight).build());
     }
 
+    private void addToggle(int x, int y, int w, String label, boolean initial, java.util.function.Consumer<Boolean> setter) {
+        final boolean[] state = {initial};
+        addDrawableChild(ButtonWidget.builder(Text.literal(label + ": " + (state[0] ? "\u00a7aON" : "\u00a7cOFF")), b -> {
+            state[0] = !state[0]; setter.accept(state[0]);
+            b.setMessage(Text.literal(label + ": " + (state[0] ? "\u00a7aON" : "\u00a7cOFF")));
+        }).dimensions(x, y, w, 20).build());
+    }
     private String getPositionName(ModConfig.Position pos) {
         return switch (pos) {
             case TOP_LEFT -> "Top Left";
             case TOP_RIGHT -> "Top Right";
             case BOTTOM_LEFT -> "Bottom Left";
             case BOTTOM_RIGHT -> "Bottom Right";
+            case TOP_CENTER -> "Top Center";
+            case BOTTOM_CENTER -> "Bottom Center";
         };
     }
 
-    private String getThemeColoredName(Theme theme) {
-        return switch (theme) {
-            case CHERRY_BLOSSOM -> "§d" + theme.getDisplayName();
-            case PURPLE -> "§5" + theme.getDisplayName();
-            case OCEAN -> "§b" + theme.getDisplayName();
-            case FOREST -> "§a" + theme.getDisplayName();
-            case SUNSET -> "§6" + theme.getDisplayName();
-        };
-    }
+    private String getThemeColoredName(Theme theme) { return "\u00a7d" + theme.getDisplayName(); }
 
     private String getRotationText(float speed) {
         if (speed == 0) return "§7Disabled";
