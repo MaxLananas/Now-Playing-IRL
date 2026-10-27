@@ -19,7 +19,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.sdl.SDLScancode;
 import java.util.concurrent.*;
 
 @Environment(EnvType.CLIENT)
@@ -46,19 +45,19 @@ public class NowPlayingClient implements ClientModInitializer {
     }
     private void registerKeybindings(){
         KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("key.nowplayingirl","category"));
-        toggleKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.toggle", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_N, category));
-        configKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.config", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_M, category));
-        cycleThemeKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.cycle_theme", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_COMMA, category));
+        toggleKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.toggle", InputConstants.Type.KEYBOARD, InputConstants.getKey("key.keyboard.n").getValue(), category));
+        configKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.config", InputConstants.Type.KEYBOARD, InputConstants.getKey("key.keyboard.m").getValue(), category));
+        cycleThemeKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.cycle_theme", InputConstants.Type.KEYBOARD, InputConstants.getKey("key.keyboard.comma").getValue(), category));
     }
     private void onClientTick(Minecraft client){
         while(toggleKey.consumeClick()){
             config.setEnabled(!config.isEnabled()); config.save();
-            if(client.player!=null) client.player.displayClientMessage(Component.literal("\u00a7d[Now Playing IRL] \u00a7fWidget: "+(config.isEnabled()?"\u00a7aON":"\u00a7cOFF")), true);
+            McCompat.showActionBar(client.player, Component.literal("\u00a7d[Now Playing IRL] \u00a7fWidget: "+(config.isEnabled()?"\u00a7aON":"\u00a7cOFF")));
         }
-        while(configKey.consumeClick()){ if(client.screen==null) client.setScreen(new ConfigScreen(null)); }
+        while(configKey.consumeClick()){ if(McCompat.noScreenOpen(client)) McCompat.setScreen(client, new ConfigScreen(null)); }
         while(cycleThemeKey.consumeClick()){
             config.cycleTheme(); config.save();
-            if(client.player!=null) client.player.displayClientMessage(Component.literal("\u00a7d[Now Playing IRL] \u00a7fTheme: \u00a7b"+config.getTheme().getDisplayName()), true);
+            McCompat.showActionBar(client.player, Component.literal("\u00a7d[Now Playing IRL] \u00a7fTheme: \u00a7b"+config.getTheme().getDisplayName()));
         }
     }
     private void startMediaPolling(){

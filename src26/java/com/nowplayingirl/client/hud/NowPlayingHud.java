@@ -8,7 +8,7 @@ public class NowPlayingHud {
     public void onMediaChanged(MediaInfo m){ if(m!=null&&!m.equals(currentMedia))animator.triggerAppear(); currentMedia=m; }
     private int height(){ return client.getConfig().isCompactMode()?42:WIDGET_HEIGHT; }
     public void render(GuiGraphicsExtractor ctx,float tickDelta){
-        Minecraft mc=Minecraft.getInstance(); if(mc.player==null||mc.options.hideGui) return;
+        Minecraft mc=Minecraft.getInstance(); if(mc.player==null||com.nowplayingirl.client.McCompat.hudHidden(mc)) return;
         ModConfig cfg=client.getConfig(); if(!cfg.isEnabled()) return;
         if(currentMedia==null&&cfg.isHideWhenNoMedia()) return;
         long now=System.currentTimeMillis(); animator.update((now-lastUpdateTime)/16.67f,currentMedia!=null,cfg.getRotationSpeed()); lastUpdateTime=now;

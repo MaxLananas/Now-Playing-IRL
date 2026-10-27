@@ -28,7 +28,7 @@ public class ConfigScreen extends Screen {
         btn("Poll: "+config.getPollingIntervalMs()+"ms",cx+2,y,98,b->{ int[] vals={250,500,1000,2000,5000}; int cur=config.getPollingIntervalMs(), nxt=vals[0]; for(int i=0;i<vals.length;i++) if(vals[i]==cur) nxt=vals[(i+1)%vals.length]; config.setPollingIntervalMs(nxt); b.setMessage(Component.literal("Poll: "+nxt+"ms")); });
         y+=spacing+15;
         btn("\u00a7a\u2714 Done",cx-100,y,95,b->onClose());
-        btn("\u00a7c\u2716 Reset",cx+5,y,95,b->{config.reset(); minecraft.setScreen(new ConfigScreen(parent));});
+        btn("\u00a7c\u2716 Reset",cx+5,y,95,b->{config.reset(); com.nowplayingirl.client.McCompat.setScreen(minecraft, new ConfigScreen(parent));});
     }
     private void toggle(int x,int y,int w,String label,boolean initial,Consumer<Boolean> setter){
         final boolean[] state={initial};
@@ -36,7 +36,7 @@ public class ConfigScreen extends Screen {
     }
     private String posName(ModConfig.Position p){ return switch(p){ case TOP_LEFT->"Top Left"; case TOP_RIGHT->"Top Right"; case BOTTOM_LEFT->"Bottom Left"; case BOTTOM_RIGHT->"Bottom Right"; case TOP_CENTER->"Top Center"; case BOTTOM_CENTER->"Bottom Center"; }; }
     private String rotText(float s){ if(s==0) return "\u00a77Disabled"; if(s<1) return "\u00a7eSlow"; if(s<2) return "\u00a7aNormal"; if(s<3.5f) return "\u00a7bFast"; return "\u00a7c\u00a7lTURBO!"; }
-    @Override public void onClose(){ config.save(); minecraft.setScreen(parent); }
+    @Override public void onClose(){ config.save(); com.nowplayingirl.client.McCompat.setScreen(minecraft, parent); }
     @Override public boolean isPauseScreen(){ return false; }
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mouseX,int mouseY,float delta){
         super.extractRenderState(g,mouseX,mouseY,delta);
