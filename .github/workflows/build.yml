@@ -10,29 +10,38 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { mc: "1.21.6",  yarn: "1.21.6+build.1",  fabric: "0.128.2+1.21.6" }
-          - { mc: "1.21.7",  yarn: "1.21.7+build.1",  fabric: "0.129.0+1.21.7" }
-          - { mc: "1.21.8",  yarn: "1.21.8+build.1",  fabric: "0.136.1+1.21.8" }
-          - { mc: "1.21.9",  yarn: "1.21.9+build.1",  fabric: "0.134.1+1.21.9" }
-          - { mc: "1.21.10", yarn: "1.21.10+build.3", fabric: "0.138.4+1.21.10" }
-          - { mc: "1.21.11", yarn: "1.21.11+build.3", fabric: "0.140.2+1.21.11" }
+          # Legacy generation: Yarn mappings, Java 21
+          - { mc: "1.21.6",  yarn: "1.21.6+build.1",  fabric: "0.128.2+1.21.6",  loader: "0.18.4", java: "21", api: "yarn", gradle: "9.2.1", dir: "." }
+          - { mc: "1.21.7",  yarn: "1.21.7+build.1",  fabric: "0.129.0+1.21.7",  loader: "0.18.4", java: "21", api: "yarn", gradle: "9.2.1", dir: "." }
+          - { mc: "1.21.8",  yarn: "1.21.8+build.1",  fabric: "0.136.1+1.21.8",  loader: "0.18.4", java: "21", api: "yarn", gradle: "9.2.1", dir: "." }
+          - { mc: "1.21.9",  yarn: "1.21.9+build.1",  fabric: "0.134.1+1.21.9",  loader: "0.18.4", java: "21", api: "yarn", gradle: "9.2.1", dir: "." }
+          - { mc: "1.21.10", yarn: "1.21.10+build.3", fabric: "0.138.4+1.21.10", loader: "0.18.4", java: "21", api: "yarn", gradle: "9.2.1", dir: "." }
+          - { mc: "1.21.11", yarn: "1.21.11+build.3", fabric: "0.140.2+1.21.11", loader: "0.18.4", java: "21", api: "yarn", gradle: "9.2.1", dir: "." }
+          # 26.x generation: official Mojang mappings (no Yarn), Java 25, Loom 1.19, Loader 0.20
+          - { mc: "26.1",   yarn: "", fabric: "0.145.1+26.1",   loader: "0.20.1", java: "25", api: "mojang", gradle: "9.8.2", dir: "mc26" }
+          - { mc: "26.1.1", yarn: "", fabric: "0.145.4+26.1.1", loader: "0.20.1", java: "25", api: "mojang", gradle: "9.8.2", dir: "mc26" }
+          - { mc: "26.1.2", yarn: "", fabric: "0.155.3+26.1.2", loader: "0.20.1", java: "25", api: "mojang", gradle: "9.8.2", dir: "mc26" }
+          - { mc: "26.2",   yarn: "", fabric: "0.161.0+26.2",   loader: "0.20.1", java: "25", api: "mojang", gradle: "9.8.2", dir: "mc26" }
+          - { mc: "26.3",   yarn: "", fabric: "0.165.0+26.3",   loader: "0.20.1", java: "25", api: "mojang", gradle: "9.8.2", dir: "mc26" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with: { java-version: "21", distribution: "microsoft" }
+        with: { java-version: "${{ matrix.java }}", distribution: "microsoft" }
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: "9.2.1" }
+        with: { gradle-version: "${{ matrix.gradle }}" }
       - name: Build for MC ${{ matrix.mc }}
         run: |
           set -o pipefail
-          gradle build --build-cache --parallel --console=plain -Pminecraft_version=${{ matrix.mc }} -Pyarn_mappings=${{ matrix.yarn }} -Pfabric_version=${{ matrix.fabric }} 2>&1 | tee build-output.txt
+          ARGS="-Pminecraft_version=${{ matrix.mc }} -Pfabric_version=${{ matrix.fabric }} -Ploader_version=${{ matrix.loader }} -Pmod_version=$(grep '^mod_version' gradle.properties | cut -d= -f2)"
+          if [ -n "${{ matrix.yarn }}" ]; then ARGS="$ARGS -Pyarn_mappings=${{ matrix.yarn }}"; fi
+          gradle -p ${{ matrix.dir }} build --build-cache --parallel --console=plain $ARGS 2>&1 | tee build-output.txt
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
       - name: Rename jar per version
         run: |
           mkdir -p out
-          for f in build/libs/*.jar; do case "$f" in *-sources.jar) ;; *) cp "$f" "out/now-playing-irl-$(grep '^mod_version' gradle.properties | cut -d= -f2)-mc${{ matrix.mc }}.jar";; esac; done
+          for f in ${{ matrix.dir }}/build/libs/*.jar; do case "$f" in *-sources.jar) ;; *) cp "$f" "out/now-playing-irl-$(grep '^mod_version' gradle.properties | cut -d= -f2)-mc${{ matrix.mc }}.jar";; esac; done
           ls -l out
       - uses: actions/upload-artifact@v4
         with: { name: "now-playing-irl-mc${{ matrix.mc }}", path: "out/*.jar", if-no-files-found: error }
@@ -57,7 +66,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.v.outputs.tag }}
-          name: "Now Playing IRL ${{ steps.v.outputs.version }} — MC 1.21.6 → 1.21.11"
+          name: "Now Playing IRL ${{ steps.v.outputs.version }} — MC 1.21.6 → 26.3"
           body_path: RELEASE_NOTES.md
           files: "release-jars/*.jar"
           draft: false
