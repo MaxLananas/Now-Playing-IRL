@@ -144,7 +144,7 @@ public class ConfigScreen extends Screen {
         ).dimensions(centerX + 5, y, 95, buttonHeight).build());
     }
 
-    private void addToggle(int x, int y, int w, String label, boolean initial, java.util.function.BooleanConsumer setter) {
+    private void addToggle(int x, int y, int w, String label, boolean initial, java.util.function.Consumer<Boolean> setter) {
         final boolean[] state = {initial};
         addDrawableChild(ButtonWidget.builder(Text.literal(label + ": " + (state[0] ? "\u00a7aON" : "\u00a7cOFF")), b -> {
             state[0] = !state[0]; setter.accept(state[0]);
