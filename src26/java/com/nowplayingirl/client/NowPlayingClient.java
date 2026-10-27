@@ -6,7 +6,6 @@ import com.nowplayingirl.client.hud.NowPlayingHud;
 import com.nowplayingirl.client.media.AlbumArtFetcher;
 import com.nowplayingirl.client.media.MediaDetector;
 import com.nowplayingirl.client.media.MediaInfo;
-import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -45,9 +44,9 @@ public class NowPlayingClient implements ClientModInitializer {
     }
     private void registerKeybindings(){
         KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("key.nowplayingirl","category"));
-        toggleKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.toggle", InputConstants.Type.KEYBOARD, InputConstants.getKey("key.keyboard.n").getValue(), category));
-        configKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.config", InputConstants.Type.KEYBOARD, InputConstants.getKey("key.keyboard.m").getValue(), category));
-        cycleThemeKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nowplayingirl.cycle_theme", InputConstants.Type.KEYBOARD, InputConstants.getKey("key.keyboard.comma").getValue(), category));
+        toggleKey = KeyMappingHelper.registerKeyMapping(McCompat.createKeyMapping("key.nowplayingirl.toggle", "n", category));
+        configKey = KeyMappingHelper.registerKeyMapping(McCompat.createKeyMapping("key.nowplayingirl.config", "m", category));
+        cycleThemeKey = KeyMappingHelper.registerKeyMapping(McCompat.createKeyMapping("key.nowplayingirl.cycle_theme", "comma", category));
     }
     private void onClientTick(Minecraft client){
         while(toggleKey.consumeClick()){
