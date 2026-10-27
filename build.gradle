@@ -1,5 +1,8 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    // Both loom flavours are put on the classpath; the right one is applied below
+    // (remap = Yarn-era versions, plain = unobfuscated 26.x).
+    id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
     id 'maven-publish'
 }
 version = project.mod_version
@@ -7,6 +10,7 @@ group = project.maven_group
 base { archivesName = project.archives_base_name }
 def isMojang = project.findProperty('target_api') == 'mojang'
 def javaVer = (project.findProperty('java_version') ?: '21') as int
+apply plugin: (isMojang ? 'net.fabricmc.fabric-loom' : 'net.fabricmc.fabric-loom-remap')
 repositories { mavenCentral(); maven { url "https://maven.shedaniel.me/" }; maven { url "https://maven.terraformersmc.com/releases/" } }
 loom {
     if (!isMojang) { accessWidenerPath = file("src/main/resources/nowplayingirl.accesswidener") }

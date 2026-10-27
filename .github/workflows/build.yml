@@ -12,12 +12,12 @@ jobs:
       matrix:
         include:
           # Legacy generation: Yarn mappings, Java 21
-          - { mc: "1.21.6",  yarn: "1.21.6+build.1",  fabric: "0.128.2+1.21.6",  loader: "0.18.4", loom: "1.14-SNAPSHOT", java: "21", api: "yarn" }
-          - { mc: "1.21.7",  yarn: "1.21.7+build.1",  fabric: "0.129.0+1.21.7",  loader: "0.18.4", loom: "1.14-SNAPSHOT", java: "21", api: "yarn" }
-          - { mc: "1.21.8",  yarn: "1.21.8+build.1",  fabric: "0.136.1+1.21.8",  loader: "0.18.4", loom: "1.14-SNAPSHOT", java: "21", api: "yarn" }
-          - { mc: "1.21.9",  yarn: "1.21.9+build.1",  fabric: "0.134.1+1.21.9",  loader: "0.18.4", loom: "1.14-SNAPSHOT", java: "21", api: "yarn" }
-          - { mc: "1.21.10", yarn: "1.21.10+build.3", fabric: "0.138.4+1.21.10", loader: "0.18.4", loom: "1.14-SNAPSHOT", java: "21", api: "yarn" }
-          - { mc: "1.21.11", yarn: "1.21.11+build.3", fabric: "0.140.2+1.21.11", loader: "0.18.4", loom: "1.14-SNAPSHOT", java: "21", api: "yarn" }
+          - { mc: "1.21.6",  yarn: "1.21.6+build.1",  fabric: "0.128.2+1.21.6",  loader: "0.18.4", loom: "1.19-SNAPSHOT", java: "21", api: "yarn" }
+          - { mc: "1.21.7",  yarn: "1.21.7+build.1",  fabric: "0.129.0+1.21.7",  loader: "0.18.4", loom: "1.19-SNAPSHOT", java: "21", api: "yarn" }
+          - { mc: "1.21.8",  yarn: "1.21.8+build.1",  fabric: "0.136.1+1.21.8",  loader: "0.18.4", loom: "1.19-SNAPSHOT", java: "21", api: "yarn" }
+          - { mc: "1.21.9",  yarn: "1.21.9+build.1",  fabric: "0.134.1+1.21.9",  loader: "0.18.4", loom: "1.19-SNAPSHOT", java: "21", api: "yarn" }
+          - { mc: "1.21.10", yarn: "1.21.10+build.3", fabric: "0.138.4+1.21.10", loader: "0.18.4", loom: "1.19-SNAPSHOT", java: "21", api: "yarn" }
+          - { mc: "1.21.11", yarn: "1.21.11+build.3", fabric: "0.140.2+1.21.11", loader: "0.18.4", loom: "1.19-SNAPSHOT", java: "21", api: "yarn" }
           # 26.x generation: official Mojang mappings (no Yarn), Java 25, Loom 1.19, Loader 0.20
           - { mc: "26.1",   yarn: "", fabric: "0.145.1+26.1",   loader: "0.20.1", loom: "1.19-SNAPSHOT", java: "25", api: "mojang" }
           - { mc: "26.1.1", yarn: "", fabric: "0.145.4+26.1.1", loader: "0.20.1", loom: "1.19-SNAPSHOT", java: "25", api: "mojang" }
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: "${{ matrix.java }}", distribution: "microsoft" }
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: "9.2.1" }
+        with: { gradle-version: "9.8.2" }
       - name: Build for MC ${{ matrix.mc }}
         run: |
           set -o pipefail
