@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    permissions: { contents: read, pull-requests: write }
     strategy:
       fail-fast: false
       matrix:
@@ -39,12 +38,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: "build-log-mc${{ matrix.mc }}", path: "build-output.txt" }
-      - name: DEBUGLOG
-        if: failure() && github.event_name == 'pull_request'
-        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-        run: |
-          { echo "### Build log MC ${{ matrix.mc }}"; echo '```'; grep -E "error:|FAILED|What went wrong|Could not|Execution failed|Caused by|\.java:|\.gradle" build-output.txt | head -60; echo '```'; } > comment.md
-          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
       - name: Rename jar per version
         run: |
           mkdir -p out
