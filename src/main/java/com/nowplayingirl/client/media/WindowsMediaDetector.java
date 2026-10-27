@@ -39,7 +39,7 @@ public class WindowsMediaDetector extends MediaDetector {
                 if(m!=null&&m.hasValidInfo()){ if(app.isBrowser()){ MusicApps.App web=TitleParser.webService(text); if(web!=null){ m=TitleParser.parse(text,web);} } best[0]=m; return false; }
                 return true;
             },null);
-        }catch(Exception e){ NowPlayingIRLMod.LOGGER.debug("Windows detection error: {}",e.getMessage()); }
+        }catch(Throwable e){ NowPlayingIRLMod.LOGGER.debug("Windows detection error: {}",e.getMessage()); }
         return best[0]!=null?best[0]:paused[0];
     }
     private String processName(int pid){

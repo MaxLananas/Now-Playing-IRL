@@ -17,8 +17,8 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    include(implementation("net.java.dev.jna:jna:5.14.0"))
-    include(implementation("net.java.dev.jna:jna-platform:5.14.0"))
+    implementation("net.java.dev.jna:jna:5.14.0") // compile-only: at runtime we use Minecraft's own JNA (bundling ours shadows it and breaks oshi on 26.x)
+    implementation("net.java.dev.jna:jna-platform:5.14.0")
 }
 processResources {
     inputs.property "version", project.version

@@ -140,7 +140,7 @@ public class NowPlayingClient implements ClientModInitializer {
                 long base = config.getPollingIntervalMs();
                 long delay = newMedia == null ? Math.min(base * (1L + Math.min(idlePolls[0]++, 4)), 5000L) : base;
                 executor.schedule(this, delay, TimeUnit.MILLISECONDS);
-            } catch (Exception e) { NowPlayingIRLMod.LOGGER.debug("Error polling media: {}", e.getMessage()); try { executor.schedule(this, 2000, TimeUnit.MILLISECONDS); } catch (Exception ignored) {} }
+            } catch (Throwable e) { NowPlayingIRLMod.LOGGER.debug("Error polling media: {}", e.getMessage()); try { executor.schedule(this, 2000, TimeUnit.MILLISECONDS); } catch (Exception ignored) {} }
         }};
         executor.schedule(poll, 0, TimeUnit.MILLISECONDS);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> shutdown());

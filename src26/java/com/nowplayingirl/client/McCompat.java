@@ -15,14 +15,14 @@ public final class McCompat {
                 Class<?>[] t = c.getParameterTypes();
                 try{
                     if(t.length==4 && t[0]==String.class && t[2]==int.class && t[3].isAssignableFrom(category.getClass())){
-                        Object type = Enum.valueOf((Class<Enum>) t[1], "KEYBOARD");
+                        Object type = typeEnum(t[1]);
                         return (net.minecraft.client.KeyMapping) c.newInstance(name, type, keyCode(key), category);
                     }
                     if(t.length==3 && t[0]==String.class && t[2].isAssignableFrom(category.getClass())){
                         return (net.minecraft.client.KeyMapping) c.newInstance(name, keyObject(key), category);
                     }
                     if(t.length==4 && t[0]==String.class && t[3]==String.class){
-                        Object type = Enum.valueOf((Class<Enum>) t[1], "KEYBOARD");
+                        Object type = typeEnum(t[1]);
                         return (net.minecraft.client.KeyMapping) c.newInstance(name, type, keyCode(key), "key.nowplayingirl.category");
                     }
                     if(t.length==3 && t[0]==String.class && t[1]==int.class && t[2]==String.class){
@@ -32,6 +32,12 @@ public final class McCompat {
             }
         }catch(Exception e){ throw new IllegalStateException("Cannot create KeyMapping "+name, e); }
         throw new IllegalStateException("No compatible KeyMapping constructor for "+name);
+    }
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private static Object typeEnum(Class<?> enumClass){
+        // 26.3 renamed InputConstants.Type.KEYSYM to KEYBOARD; accept both (this was the 26.1/26.2 startup crash)
+        for(String n : new String[]{"KEYBOARD","KEYSYM","KEY"}){ try{ return Enum.valueOf((Class<Enum>) enumClass, n); }catch(Exception ignored){} }
+        return ((Class<Enum>) enumClass).getEnumConstants()[0];
     }
     private static Object keyObject(String key) throws Exception {
         Class<?> ic = Class.forName("com.mojang.blaze3d.platform.InputConstants");
