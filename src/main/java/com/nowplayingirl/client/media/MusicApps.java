@@ -203,7 +203,7 @@ public final class MusicApps {
         a("musicolet","Musicolet","","","",""),
         a("blackplayer","BlackPlayer","","","",""),
         a("shuttle","Shuttle","","","",""),
-        a("othello","Othello","","","",""),
+        a("othello","Othello","","","","")
     );
     private static final Map<String,App> BY_WIN = new HashMap<>(), BY_LINUX = new HashMap<>();
     static { for (App a: APPS){ for(String p:a.windowsProcesses()) BY_WIN.put(p.toLowerCase(Locale.ROOT),a); for(String p:a.linuxPlayers()) BY_LINUX.put(p.toLowerCase(Locale.ROOT),a);} }
