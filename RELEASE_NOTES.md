@@ -1,12 +1,13 @@
-## 🎵 Now Playing IRL 3.0.0 — MC 1.21.6 → 1.21.11
+## 🎵 Now Playing IRL 3.1.0 — MC 1.21.6 → 26.3 (11 versions !)
 
-**Un seul téléchargement par version de Minecraft** : choisis le `.jar` qui correspond à ta version (1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10 ou 1.21.11) et place-le dans ton dossier `mods/` (Fabric Loader + Fabric API requis).
+**Choisis le `.jar` qui correspond à ta version de Minecraft** et place-le dans ton dossier `mods/` (Fabric Loader + Fabric API requis).
 
-### ✨ Nouveautés 3.0.0
-- **193 applications musicales reconnues** (contre une dizaine) : Spotify, TIDAL, Deezer, Apple Music, YouTube Music, SoundCloud, Qobuz, **AIMP (correctif #5)**, foobar2000, VLC, Winamp, MusicBee, Plex/Plexamp, Kodi, Jellyfin, les navigateurs (Chrome, Edge, Firefox, Brave, Opera GX, Vivaldi, Arc, Zen…) et les services web (YouTube, Twitch, Bandcamp, Mixcloud…).
-- **Portage multi-versions** : 1.21.6 → 1.21.11 depuis un seul code source.
-- **Optimisations** : 1 seul passage d'énumération des fenêtres sous Windows (4 avant), 1 seul processus `playerctl` sous Linux (3+ par lecteur avant), 1 seul `osascript` sous macOS, polling adaptatif (ralentit jusqu'à 5 s quand rien ne joue), timeouts stricts, cache de pochettes borné (LRU 48) et dédupliqué.
-- **Plus beau, plus d'options** : 12 thèmes, barre de progression, mode compact, texte défilant, masquage quand rien ne joue, positions haut/bas-centre, intervalle de polling réglable, liste d'apps ignorées dans la config.
-- Pochettes : URL fournie par le lecteur (MPRIS) utilisée en priorité, sinon iTunes puis Deezer.
+### 🆕 Nouveau dans la 3.1.0 : le mod arrive sur Minecraft 26.x !
+- **26.1, 26.1.1, 26.1.2, 26.2 et 26.3** supportés, en plus de 1.21.6 → 1.21.11.
+- Minecraft 26.x a tout changé (nouvelle numérotation, **mappings Mojang officiels** à la place de Yarn, **Java 25**, nouveau système de HUD Fabric, touches en SDL) : le mod a donc une couche d'adaptation dédiée (`src26/`), tout le reste (193 apps musicales, détection Spotify/TIDAL/AIMP/VLC/YouTube…, thèmes, options) est partagé entre les deux générations.
+- ⚠️ Pour les versions 26.x : utilise **Java 25** et **Fabric Loader 0.20.1+**. L'intégration ModMenu n'est pas encore incluse sur 26.x (config via la touche `M`, comme toujours).
+
+### Rappel des fonctions
+193 applications reconnues, 12 thèmes, barre de progression, mode compact, texte défilant, pochettes d'album, polling adaptatif économe en CPU.
 
 > ⚠️ Ne pas utiliser le fichier `-sources.jar` (développeurs uniquement) s'il est présent.

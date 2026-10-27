@@ -1,38 +1,28 @@
 {
-  "schemaVersion": 1,
-  "id": "nowplayingirl",
-  "version": "${version}",
-  "name": "Now Playing IRL",
-  "description": "Display your currently playing music (Spotify, TIDAL, AIMP, VLC, YouTube, 190+ apps) directly in Minecraft!",
-  "authors": [
-    "Maxlananas"
-  ],
-  "contact": {
-    "homepage": "https://github.com/MaxLananas/Now-Playing-IRL",
-    "sources": "https://github.com/MaxLananas/Now-Playing-IRL",
-    "issues": "https://github.com/MaxLananas/Now-Playing-IRL/issues"
-  },
-  "license": "MIT",
-  "icon": "assets/nowplayingirl/icon.png",
-  "environment": "client",
-  "entrypoints": {
-    "client": [
-      "com.nowplayingirl.client.NowPlayingClient"
-    ],
-    "modmenu": [
-      "com.nowplayingirl.client.config.ModMenuIntegration"
-    ]
-  },
-  "mixins": [
-    "nowplayingirl.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=0.16.0",
-    "minecraft": ">=${minecraft_version}",
-    "java": ">=21",
-    "fabric-api": "*"
-  },
-  "suggests": {
-    "modmenu": "*"
-  }
+    "schemaVersion": 1,
+    "id": "nowplayingirl",
+    "version": "${version}",
+    "name": "Now Playing IRL",
+    "description": "Display your currently playing music (Spotify, TIDAL, AIMP, VLC, YouTube, 190+ apps) directly in Minecraft!",
+    "authors": ["Maxlananas"],
+    "contact": {
+        "homepage": "https://github.com/MaxLananas/Now-Playing-IRL",
+        "sources": "https://github.com/MaxLananas/Now-Playing-IRL",
+        "issues": "https://github.com/MaxLananas/Now-Playing-IRL/issues"
+    },
+    "license": "MIT",
+    "icon": "assets/nowplayingirl/icon.png",
+    "environment": "client",
+    "entrypoints": {
+        "client": ["com.nowplayingirl.client.NowPlayingClient"],
+        "modmenu": ${modmenu_entrypoints}
+    },
+    "mixins": ["${mixins_config}"],
+    "depends": {
+        "fabricloader": ">=${loader_version}",
+        "minecraft": "${mc_dependency}",
+        "java": ">=${java_version}",
+        "fabric-api": "*"
+    },
+    "suggests": { "modmenu": "*" }
 }
